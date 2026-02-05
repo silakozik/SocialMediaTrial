@@ -1,6 +1,17 @@
 from fastapi import FastAPI, HTTPException
 from app.schemas import PostCreate, PostResponse
-app = FastAPI()
+from app.db import Post, get_async_session, create_db_and_tables
+from sqlalchemy.ext.asyncio import AsyncSession 
+from contextlib import asynccontextmanager
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await create_db_and_tables()
+    yield
+
+app = FastAPI(lifespan=lifespan)
+"python main.py ile başlat projeyi"
 
 text_posts = {
 1:{"title": "New Post", "content": "Cool test post"},
@@ -15,7 +26,6 @@ text_posts = {
 10:{"title": "Mini Announcement", "content": "New video drops tomorrow—covering the weirdest Python features!"}
 }
 
-"python main.py ile başlat projeyi"
 
 @app.get("/posts")
 def get_all_posts(limit: int):
