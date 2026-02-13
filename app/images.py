@@ -4,6 +4,9 @@ import os
 
 load_dotenv()
 
-# Bu sürümde ImageKit __init__ argüman almıyor; yapılandırma ortam değişkenleriyle yapılacak.
-imagekit = ImageKit()
+imagekit = ImageKit(
+    public_key=os.getenv("IMAGEKIT_PUBLIC_KEY"),
+    private_key=os.getenv("IMAGEKIT_PRIVATE_KEY"),
+    url_endpoint=os.getenv("IMAGEKIT_URL_ENDPOINT") 
+)
 
