@@ -17,7 +17,10 @@ async def lifespan(app: FastAPI):
     yield
 
 app = FastAPI(lifespan=lifespan)
-"projeyi python main.py ile yada uv main.py ile başlat"
+"projeyi python main.py ile yada uv main.py ile başlat." 
+"uvicorn main:app --reload ile başlatmak en iyisi"
+"!!! .venv\Scripts\activate ile venv'i aktif etmeyi unutma !!!"
+
 
 @app.post("/upload")
 async def upload_file(
@@ -42,7 +45,6 @@ async def upload_file(
                         "tags": ["backend-upload"]
                     }
                 )
-
 
             if upload_result.response_metadata.http_status_code == 200:
                 post = Post(

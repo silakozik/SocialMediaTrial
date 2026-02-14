@@ -4,9 +4,9 @@ import os
 
 load_dotenv()
 
+# ImageKit 5.x sürümünde sadece private_key gereklidir
+# public_key ve url_endpoint environment variable'lardan otomatik olarak alınır
 imagekit = ImageKit(
-    public_key=os.getenv("IMAGEKIT_PUBLIC_KEY"),
-    private_key=os.getenv("IMAGEKIT_PRIVATE_KEY"),
-    url_endpoint=os.getenv("IMAGEKIT_URL_ENDPOINT") 
+    private_key=os.getenv("IMAGEKIT_PRIVATE_KEY")
 )
 
