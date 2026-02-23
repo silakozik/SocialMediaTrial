@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException, File, UploadFile, Depends, Form
-from app.schemas import PostCreate, PostResponse
+from app.schemas import PostCreate, PostResponse, UserRead, UserCreate, UserUpdate
 from app.db import Post, get_async_session, create_db_and_tables
 from sqlalchemy.ext.asyncio import AsyncSession 
 from contextlib import asynccontextmanager
@@ -9,6 +9,7 @@ import shutil
 import os
 import uuid
 import tempfile
+from app.users import auth_backend, current_active_user, fastapi_users
 
 
 @asynccontextmanager
@@ -21,6 +22,12 @@ app = FastAPI(lifespan=lifespan)
 "uvicorn main:app --reload ile başlatmak en iyisi"
 "!!! .venv\Scripts\activate ile venv'i aktif etmeyi unutma !!! İLK ÖNCE BUNU YAP !!!"
 
+
+app.include_router(fastapi_users.get_auth_router(auth_backend), prefix="/auth/jwt", tags=["auth"])
+app.include_router(fastapi_users.get_register_router(UserRead, UserCreate), prefix="/auth", tags=["auth"]) 
+app.include_router(fastapi_users.get_reset_password_router(), prefix="/auth", tags=["auth"])
+app.include_router(fastapi_users.get_verify_router(UserRead), prefix="/auth", tags=["auth"])
+app.include_router(fastapi_users.get_users_router(UserRead, UserUpdate), prefix="/users", tags=["users"])
 
 @app.post("/upload")
 async def upload_file(
