@@ -19,7 +19,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 "projeyi python main.py ile yada uv main.py ile başlat." 
-"uvicorn main:app --reload ile başlatmak en iyisi"
+"uvicorn app.app:app --reload ile başlatmak en iyisi"
 "!!! .venv\Scripts\activate ile venv'i aktif etmeyi unutma !!! İLK ÖNCE BUNU YAP !!!"
 
 
