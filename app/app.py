@@ -1,7 +1,12 @@
+from pathlib import Path
+
 from fastapi import FastAPI, HTTPException, File, UploadFile, Depends, Form
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+
 from app.schemas import PostCreate, PostResponse, UserRead, UserCreate, UserUpdate
 from app.db import Post, get_async_session, create_db_and_tables, User
-from sqlalchemy.ext.asyncio import AsyncSession 
+from sqlalchemy.ext.asyncio import AsyncSession
 from contextlib import asynccontextmanager
 from sqlalchemy import select
 from app.images import imagekit
@@ -11,17 +16,23 @@ import uuid
 import tempfile
 from app.users import auth_backend, current_active_user, fastapi_users
 
+STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await create_db_and_tables()
     yield
 
-app = FastAPI(lifespan=lifespan)
-"projeyi python main.py ile yada uv main.py ile başlat." 
-"uvicorn app.app:app --reload ile başlatmak en iyisi"
-"!!! .venv\Scripts\activate ile venv'i aktif etmeyi unutma !!! İLK ÖNCE BUNU YAP !!!"
 
+app = FastAPI(lifespan=lifespan)
+
+if STATIC_DIR.exists():
+    @app.get("/")
+    def serve_frontend():
+        return FileResponse(STATIC_DIR / "index.html")
+
+    app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 app.include_router(fastapi_users.get_auth_router(auth_backend), prefix="/auth/jwt", tags=["auth"])
 app.include_router(fastapi_users.get_register_router(UserRead, UserCreate), prefix="/auth", tags=["auth"]) 
