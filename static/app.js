@@ -32,11 +32,11 @@ async function login(email, password) {
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body,
   });
+  const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    throw new Error(data.detail || "Giriş başarısız");
+    throw new Error(getErrorDetail(data) || `Giriş başarısız (${res.status})`);
   }
-  const data = await res.json();
+  if (!data.access_token) throw new Error("Sunucu token döndürmedi");
   return data.access_token;
 }
 
@@ -46,10 +46,9 @@ async function register(email, password) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password }),
   });
+  const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    const msg = Array.isArray(data.detail) ? data.detail.map((d) => d.msg).join(", ") : (data.detail?.msg || data.detail || "Kayıt başarısız");
-    throw new Error(msg);
+    throw new Error(getErrorDetail(data) || `Kayıt başarısız (${res.status})`);
   }
 }
 
