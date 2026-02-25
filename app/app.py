@@ -78,11 +78,13 @@ async def upload_file(
 async def get_feed(
     session: AsyncSession = Depends(get_async_session),
     user: User = Depends(current_active_user)
-): 
+):
     result = await session.execute(select(Post).order_by(Post.created_at.desc()))
     posts = [row[0] for row in result.all()]
 
-    result = await session.execute(select(User).where(User.id == post.user_id))
+    # Tüm post'lara ait kullanıcıları tek sorguda çekiyoruz
+    user_ids = list({post.user_id for post in posts})
+    result = await session.execute(select(User).where(User.id.in_(user_ids)))
     users = [row[0] for row in result.all()]
     user_dict = {u.id: u.email for u in users}
 
@@ -98,33 +100,34 @@ async def get_feed(
                 "file_name": post.file_name,
                 "created_at": post.created_at.isoformat(),
                 "is_owner": post.user_id == user.id,
-                "email": user_dict.get(post.user_id, "Unknown") 
+                "email": user_dict.get(post.user_id, "Unknown")
             }
         )
 
     return {"posts": posts_data}
 
-    @app.delete(f"/posts({post_id})")
-    async def delete_post(
-        post_id: str, session: 
-        AsyncSession = Depends(get_async_session), 
-        user: User = Depends(current_active_user)
-    ):
-        try:
-            post_uuid = uuid.UUID(post_id)
 
-            result = await session.execute(select(Post).where(Post.id == post_uuid))
-            post =result.scalars().first()
+@app.delete("/posts/{post_id}")
+async def delete_post(
+    post_id: str,
+    session: AsyncSession = Depends(get_async_session),
+    user: User = Depends(current_active_user)
+):
+    try:
+        post_uuid = uuid.UUID(post_id)
 
-            if not post:
-                raise HTTPException(status_code=404, detail="Post not found")
+        result = await session.execute(select(Post).where(Post.id == post_uuid))
+        post = result.scalars().first()
 
-            if post.user_id != user.id:
-                raise HTTPException(status_code=403, detail="You are not allowed to delete this post")
+        if not post:
+            raise HTTPException(status_code=404, detail="Post not found")
 
-                await session.delete(post)
-                await session.commit()
+        if post.user_id != user.id:
+            raise HTTPException(status_code=403, detail="You are not allowed to delete this post")
 
-                return {"success": True, "message": "Post deleted successfully"}
-        except Exception as e:
-                raise HTTPException(status_code=500, detail=str(e))
+        await session.delete(post)
+        await session.commit()
+
+        return {"success": True, "message": "Post deleted successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
