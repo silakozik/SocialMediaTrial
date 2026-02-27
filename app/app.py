@@ -28,6 +28,10 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+"projeyi python main.py ile yada uv main.py ile başlat." 
+"uvicorn main:app --reload ile başlatmak en iyisi"
+"!!! .venv\Scripts\activate ile venv'i aktif etmeyi unutma !!! İLK ÖNCE BUNU YAP !!!"
+
 if STATIC_DIR.exists():
     @app.get("/")
     def serve_frontend():
@@ -57,27 +61,24 @@ async def upload_file(
             shutil.copyfileobj(file.file, temp_file)
 
             with open(temp_file_path, "rb") as f:
-                upload_result = imagekit.upload_file(
+                # ImageKit Python SDK 5.x uses the `files.upload` API
+                upload_result = imagekit.files.upload(
                     file=f,
                     file_name=file.filename,
-                    options={
-                        "use_unique_file_name": True,
-                        "tags": ["backend-upload"]
-                    }
+                    tags=["backend-upload"],
                 )
 
-            if upload_result.response_metadata.http_status_code == 200:
-                post = Post(
-                    user_id=user.id,
-                    caption=caption,
-                    url=upload_result.url,
-                    file_type="video" if file.content_type.startswith("video/") else "image",
-                    file_name=upload_result.name
-                )
-                session.add(post)
-                await session.commit()
-                await session.refresh(post)
-                return post
+            post = Post(
+                user_id=user.id,
+                caption=caption,
+                url=upload_result.url,
+                file_type="video" if file.content_type.startswith("video/") else "image",
+                file_name=file.filename,
+            )
+            session.add(post)
+            await session.commit()
+            await session.refresh(post)
+            return post
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
